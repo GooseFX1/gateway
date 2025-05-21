@@ -8,7 +8,7 @@ import {
   GetSwapQuoteRequestType,
   GetSwapQuoteRequest
 } from '../../../schemas/trading-types/swap-schema'
-import { CurveCalculator, PoolKeys, PoolInfo, SwapResult } from 'goosefx-amm-sdk'
+import { OracleBasedCurveCalculator, PoolKeys, PoolInfo, SwapResult } from 'goosefx-amm-sdk'
 import BN from 'bn.js'
 import Decimal from 'decimal.js'
 import { estimateGasSolana } from '../../../chains/solana/routes/estimate-gas'
@@ -34,6 +34,12 @@ export async function getRawSwapQuote(
   side: 'BUY' | 'SELL',
   slippagePct?: number
 ): Promise<RawQuoteResponse> {
+  // Convert side to exactIn
+  const exactIn = side === 'SELL';
+  if (!exactIn) {
+    throw new Error(`FixedOut swaps not supported by Gamma oracle-based AMM`)
+  }
+
   const solana = await Solana.getInstance(network);
   const gamma = await Gamma.getInstance(network);
 
@@ -50,9 +56,6 @@ export async function getRawSwapQuote(
 
   const baseTokenAddress = resolvedBaseToken.address
   const quoteTokenAddress = resolvedQuoteToken.address
-
-  // Convert side to exactIn
-  const exactIn = side === 'SELL';
   
   logger.info(`getRawSwapQuote: poolId=${poolId}, baseToken=${baseTokenSymbol}, quoteToken=${quoteTokenSymbol}, amount=${amount}, side=${side}, exactIn=${exactIn}`)
   
@@ -77,9 +80,8 @@ export async function getRawSwapQuote(
   // `side` specifies if the amount(in base tokens) is what we're buying or what we're selling
   // - For buys, output is in base tokens
   // - For sells, input is in base tokens
-  const [inputToken, outputToken, inputTokenReserves, outputTokenReserves] = side === 'BUY'
-    ? [resolvedQuoteToken, resolvedBaseToken, ammPoolInfo.quoteTokenAmount, ammPoolInfo.baseTokenAmount]
-    : [resolvedBaseToken, resolvedQuoteToken, ammPoolInfo.baseTokenAmount, ammPoolInfo.quoteTokenAmount] 
+  const [inputToken, outputToken, inputTokenReserves, outputTokenReserves] = 
+    [resolvedBaseToken, resolvedQuoteToken, ammPoolInfo.baseTokenAmount, ammPoolInfo.quoteTokenAmount] 
   const zeroForOne = inputToken.address === ammPoolInfo.baseTokenAddress
   
   logger.info(`Input token: ${inputToken.symbol}, address=${inputToken.address}, decimals=${inputToken.decimals}`)
@@ -101,23 +103,15 @@ export async function getRawSwapQuote(
   logger.info(`Amount in human readable: ${amount}`)
   logger.info(`Amount in with decimals: ${amountInWithDecimals}, Amount out with decimals: ${amountOutWithDecimals}`)
 
-  const result = exactIn ?
-    CurveCalculator.swapBaseIn(
-      new BN(amountInWithDecimals!),
-      new BN(inputTokenReserves),
-      new BN(outputTokenReserves),
-      new BN(ammPoolInfo.feePct),
-      observationState,
-      rpcData.volatilityFactor,
-    ) :
-    CurveCalculator.swapBaseOut(
-      new BN(amountOutWithDecimals!),
-      new BN(inputTokenReserves),
-      new BN(outputTokenReserves),
-      new BN(ammPoolInfo.feePct),
-      observationState,
-      rpcData.volatilityFactor,
-    )
+  const result = OracleBasedCurveCalculator.swap(
+    new BN(amountInWithDecimals!),
+    zeroForOne,
+    new BN(inputTokenReserves),
+    new BN(outputTokenReserves),
+    new BN(ammPoolInfo.feePct),
+    observationState,
+    rpcData
+  ) 
   
   const slippage = slippagePct === undefined ? 0.01 : slippagePct / 100
   const otherAmountThreshold = exactIn

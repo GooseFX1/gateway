@@ -23,6 +23,12 @@ async function executeSwap(
   poolAddress: string,
   slippagePct?: number
 ): Promise<ExecuteSwapResponseType> {
+  // Convert side to exactIn
+  const exactIn = side === 'SELL';
+  if (!exactIn) {
+    throw new Error(`BUY side(Exact Out) not supported by Gamma oracle swaps`)
+  }
+
   const solana = await Solana.getInstance(network)
   const gamma = await Gamma.getInstance(network)
   const wallet = await solana.getWallet(walletAddress)
@@ -35,9 +41,6 @@ async function executeSwap(
 
   // Use configured slippage if not provided
   const effectiveSlippage = slippagePct || gamma.getSlippagePct('amm')
-
-  // Convert side to exactIn
-  const exactIn = side === 'SELL';
 
   // Get swap quote
   const quote = await getRawSwapQuote(
@@ -59,11 +62,10 @@ async function executeSwap(
   let currentPriorityFee = (await solana.estimateGas() * 1e9) - BASE_FEE;
   while (currentPriorityFee <= solana.config.maxPriorityFee * 1e9) {
     const priorityFeePerCU = Math.floor(currentPriorityFee * 1e6 / COMPUTE_UNITS);
-    let { transaction } = await gamma.client.cpmm.swap({
+    let { transaction } = await gamma.client.cpmm.swapWithOracle({
       poolInfo: quote.poolInfo,
       poolKeys: quote.poolKeys,
       zeroForOne: quote.zeroForOne,
-      baseIn: exactIn,
       swapResult: quote,
       slippage: effectiveSlippage / 100,
       txVersion: TxVersion.V0,
