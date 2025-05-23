@@ -170,8 +170,8 @@ importers:
         specifier: ^10.0.0
         version: 10.1.0
       goosefx-amm-sdk:
-        specifier: file:../gamma-sdk
-        version: file:../gamma-sdk(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)
+        specifier: ^2.0.0
+        version: 2.0.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)
       graphql-request:
         specifier: ^6.1.0
         version: 6.1.0(graphql@15.10.1)
@@ -4134,8 +4134,8 @@ packages:
   google-protobuf@3.21.4:
     resolution: {integrity: sha512-MnG7N936zcKTco4Jd2PX2U96Kf9PxygAPKBug+74LHzmHXmceN16MmRcdgZv+DGef/S9YvQAfRsNCn4cjf9yyQ==}
 
-  goosefx-amm-sdk@file:../gamma-sdk:
-    resolution: {directory: ../gamma-sdk, type: directory}
+  goosefx-amm-sdk@2.0.0:
+    resolution: {integrity: sha512-/LNSsJJYqd47wjRssd5mqq8oKt77zxl0qAccUIYHz6ufWpwZI8jJyHqL4Z9mjVod7TJn5z0iqGpjMNB2MjATVA==}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -12948,7 +12948,7 @@ snapshots:
 
   google-protobuf@3.21.4: {}
 
-  goosefx-amm-sdk@file:../gamma-sdk(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10):
+  goosefx-amm-sdk@2.0.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10):
     dependencies:
       '@coral-xyz/anchor': 0.31.1(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
       '@project-serum/anchor': 0.26.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
